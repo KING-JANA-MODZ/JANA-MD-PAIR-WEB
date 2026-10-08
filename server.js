@@ -1,6 +1,5 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
+const cors = require('cors');
 const pino = require('pino');
 const {
     default: makeWASocket,
@@ -11,25 +10,28 @@ const {
 } = require('@whiskeysockets/baileys');
 
 const app = express();
+app.use(cors()); // UI එකෙන් එන Requests වෙනුවෙන් CORS සක්‍රිය කිරීම
+app.use(express.json());
+
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Root Endpoint (Server Online ද යන්න පරීක්ෂා කිරීමට)
+app.get('/', (req, res) => {
+    res.json({ status: true, message: "JANA MODZ Pair Server is Active!" });
+});
 
-// Web Page එක හරහා Pairing Code එක ලබාගන්නා Endpoint එක
-app.get('/pair', async (req, res) => {
+// Pair Code ලබාදෙන API Endpoint එක
+app.get('/api/pair', async (req, res) => {
     let phone = req.query.phone;
 
     if (!phone) {
-        return res.json({ status: false, message: 'කරුණාකර දුරකථන අංකය ලබාදෙන්න.' });
+        return res.json({ status: false, message: 'දුරකථන අංකය ඇතුළත් කර නැත.' });
     }
 
-    // Number එකේ තියෙන අමතර ලකුණු (spaces, +, -) ඉවත් කිරීම
     phone = phone.replace(/[^0-9]/g, '');
 
     try {
-        const sessionPath = path.join(__dirname, 'session');
-        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+        const { state, saveCreds } = await useMultiFileAuthState('./session');
 
         const Sock = makeWASocket({
             auth: {
@@ -43,14 +45,6 @@ app.get('/pair', async (req, res) => {
 
         Sock.ev.on('creds.update', saveCreds);
 
-        Sock.ev.on('connection.update', async (update) => {
-            const { connection } = update;
-            if (connection === 'open') {
-                console.log('WhatsApp Bot සාර්ථකව සම්බන්ධ විය!');
-            }
-        });
-
-        // WhatsApp එකෙන් Pairing Code එක ඉල්ලීම
         if (!Sock.authState.creds.registered) {
             await delay(1500);
             let code = await Sock.requestPairingCode(phone);
@@ -63,10 +57,10 @@ app.get('/pair', async (req, res) => {
 
     } catch (error) {
         console.error("Pairing Error:", error);
-        return res.json({ status: false, message: 'Pairing Code එක ලබාගැනීමට නොහැකි විය. නැවත උත්සාහ කරන්න.' });
+        return res.json({ status: false, message: 'Pair Code එක සෑදීමට නොහැකි විය. නැවත උත්සාහ කරන්න.' });
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`Web Server එක port ${PORT} හි ක්‍රියාත්මක වේ.`);
+    console.log(`JANA MODZ Pair Server is running on port ${PORT}`);
 });
