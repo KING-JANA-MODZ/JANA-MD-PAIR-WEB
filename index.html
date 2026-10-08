@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot Web Pair</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h2 {
+            color: #2ea043;
+            margin-top: 0;
+        }
+        p {
+            font-size: 14px;
+            color: #8b949e;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #2ea043;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #238636;
+            border: none;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        .code-display {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #0d1117;
+            border: 1px dashed #2ea043;
+            border-radius: 6px;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: #3fb950;
+        }
+        .error {
+            color: #f85149;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>WhatsApp Web Pair</h2>
+    <p>දුරකථන අංකය රටේ කේතය (Country Code) සමඟ ඇතුළත් කරන්න. (උදා: 94712345678)</p>
+    
+    <input type="text" id="phone" placeholder="947xxxxxxxx">
+    <button onclick="getPairCode()">Pair Code එක ලබාගන්න</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    async function getPairCode() {
+        const phoneInput = document.getElementById('phone').value.trim();
+        const resultDiv = document.getElementById('result');
+
+        if (!phoneInput) {
+            alert('කරුණාකර දුරකථන අංකයක් ඇතුළත් කරන්න.');
+            return;
+        }
+
+        resultDiv.innerHTML = '<p style="color:#8b949e; margin-top:15px;">Pairing Code එක සාදමින් පවතී...</p>';
+
+        try {
+            const res = await fetch(`/pair?phone=${phoneInput}`);
+            const data = await res.json();
+
+            if (data.status) {
+                resultDiv.innerHTML = `
+                    <div class="code-display">${data.code}</div>
+                    <p style="margin-top:12px; font-size:12px;">ලැබුණු Code එක WhatsApp Notification එක මත Click කර ඇතුළත් කරන්න.</p>
+                `;
+            } else {
+                resultDiv.innerHTML = `<p class="error">${data.message}</p>`;
+            }
+        } catch (err) {
+            resultDiv.innerHTML = '<p class="error">සම්බන්ධතාවයේ දෝෂයක් සිදු විය. නැවත උත්සාහ කරන්න.</p>';
+        }
+    }
+</script>
+
+</body>
+</html>
